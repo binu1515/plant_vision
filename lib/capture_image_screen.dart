@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data'; // Add this import
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
@@ -11,6 +11,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:async/async.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:plant_code/dio_api.dart';
 
 import 'display_image_screen.dart';
@@ -25,6 +26,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   Future<void>? _initializeControllerFuture;
   String? _imagePath;
   ui.Image? _displayImage;
+  final ImagePicker _picker = ImagePicker();
 
   get pred_plant => null;
 
@@ -66,7 +68,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
 
       // Resize the image
       final resizedImage = await _resizeImage(File(imagePath), 300, 300);
-      final pred_plant =await postFile(File(imagePath));
+      final pred_plant = await postFile(File(imagePath));
 
       setState(() {
         _imagePath = imagePath;
@@ -79,13 +81,53 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         MaterialPageRoute(
           builder: (context) => DisplayImageScreen(
             imagePath: _imagePath!,
-            displayImage: _displayImage!, pred_plant: pred_plant,
+            displayImage: _displayImage!,
+            pred_plant: pred_plant,
           ),
         ),
       );
 
       // Upload the image
-      Upload(File(imagePath));
+      upload(File(imagePath));
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _pickAndSaveImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile != null) {
+        final imageFile = File(pickedFile.path);
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath = path.join(directory.path, '${DateTime.now()}.png');
+        await imageFile.copy(imagePath);
+
+        // Resize the image
+        final resizedImage = await _resizeImage(File(imagePath), 300, 300);
+        final pred_plant = await postFile(File(imagePath));
+
+        setState(() {
+          _imagePath = imagePath;
+          _displayImage = resizedImage;
+        });
+
+        // Navigate to the new screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DisplayImageScreen(
+              imagePath: _imagePath!,
+              displayImage: _displayImage!,
+              pred_plant: pred_plant,
+            ),
+          ),
+        );
+
+        // Upload the image
+        upload(File(imagePath));
+      }
     } catch (e) {
       print(e);
     }
@@ -101,33 +143,42 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     return completer.future;
   }
 
-  void Upload(File imageFile) async {
-    // open a bytestream
-    var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
-    // get file length
-    var length = await imageFile.length();
+  Future<void> upload(File imageFile) async {
+    try {
+      // open a bytestream
+      var stream = http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+      // get file length
+      var length = await imageFile.length();
 
-    // string to uri
-    var uri = Uri.parse("http://ip:8082/composer/predict");
+      // string to uri
+      var uri = Uri.parse("http://ip:8082/composer/predict"); // Use 10.0.2.2 for Android emulator
 
-    // create multipart request
-    var request = http.MultipartRequest("POST", uri);
+      // create multipart request
+      var request = http.MultipartRequest("POST", uri);
 
-    // multipart that takes file
-    var multipartFile = http.MultipartFile('file', stream, length,
-        filename: path.basename(imageFile.path));
+      // multipart that takes file
+      var multipartFile = http.MultipartFile('file', stream, length,
+          filename: path.basename(imageFile.path));
 
-    // add file to multipart
-    request.files.add(multipartFile);
+      // add file to multipart
+      request.files.add(multipartFile);
 
-    // send
-    var response = await request.send();
-    print(response.statusCode);
+      // send
+      var response = await request.send();
+      print(response.statusCode);
 
-    // listen for response
-    response.stream.transform(utf8.decoder).listen((value) {
-      print(value);
-    });
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // Decode the response body using utf8 decoder
+        response.stream.transform(utf8.decoder).listen((value) {
+          print(value);
+        });
+      } else {
+        print('Error: Failed to upload image. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   @override
@@ -150,11 +201,21 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
               },
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FloatingActionButton(
+                onPressed: _captureAndSaveImage,
+                child: Icon(Icons.camera_alt),
+              ),
+              SizedBox(width: 20),
+              FloatingActionButton(
+                onPressed: _pickAndSaveImage,
+                child: Icon(Icons.photo_library),
+              ),
+            ],
+          )
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _captureAndSaveImage,
-        child: Icon(Icons.camera_alt),
       ),
     );
   }

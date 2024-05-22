@@ -1,6 +1,6 @@
-# plant_code
+Medicinal plant detection app
 
-A new Flutter project.
+Utilizing vision transformer with fast api backend
 
 ## Getting Started
 
