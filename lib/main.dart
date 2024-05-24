@@ -1,6 +1,8 @@
 //import 'package:camerawesome/camerawesome_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:plant_code/onboard.dart';
 //import 'package:plant_code/camera.dart';
+import 'onboard.dart';
 import 'capture_image_screen.dart';
 //import 'camera.dart';
 
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: CaptureImageScreen()
+      home: OnboardScreen()
     );
   }
 }
