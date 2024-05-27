@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:newfoodexpress/constant.dart';
-//import 'package:newfoodexpress/model/allinonboardscreen.dart';
-import 'package:flutter/cupertino.dart';
+import 'capture_image_screen.dart';
 
 class AllinOnboardModel {
   String imgStr;
@@ -15,11 +13,11 @@ class PageBuilderWidget extends StatelessWidget {
   String description;
   String imgurl;
   PageBuilderWidget({
-    super.key,
+    Key? key,
     required this.titlestr,
     required this.description,
     required this.imgurl,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +30,9 @@ class PageBuilderWidget extends StatelessWidget {
             margin: const EdgeInsets.only(top: 20),
             child: Image.asset(
               imgurl,
-              height: 200, // Set your desired height here
-              width: 200,  // Set your desired width here
-              fit: BoxFit.contain, // Adjust the fit as needed
+              height: 200,
+              width: 200,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(
@@ -67,16 +65,12 @@ class PageBuilderWidget extends StatelessWidget {
   }
 }
 
-
 class OnboardScreen extends StatefulWidget {
-  const OnboardScreen({super.key});
+  const OnboardScreen({Key? key}) : super(key: key);
 
   @override
   State<OnboardScreen> createState() => _OnboardScreenState();
 }
-
-
-
 
 Color lightgreenshede = Color(0xFFF0FAF6);
 Color lightgreenshede1 = Color(0xFFB2D9CC);
@@ -138,10 +132,8 @@ class _OnboardScreenState extends State<OnboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Your Scaffold widget
       body: Stack(
         children: [
-          // Your existing widgets
           PageView.builder(
             controller: _pageController,
             onPageChanged: (value) {
@@ -158,41 +150,27 @@ class _OnboardScreenState extends State<OnboardScreen> {
               );
             },
           ),
-          // Your existing Positioned widgets
-          // Navigation buttons
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.2,
-            width: MediaQuery.of(context).size.width,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: previousPage, // Navigate to previous page
-                  child: Text(
-                    "Previous",
-                    style: TextStyle(fontSize: 18, color: primarygreen),
-                  ),
-                  // Your existing ElevatedButton styles
+          Visibility(
+            visible: currentIndex == allinonboardlist.length - 1,
+            child: Positioned(
+              bottom: MediaQuery.of(context).size.height * 0.2,
+              width: MediaQuery.of(context).size.width,
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    print("Getting started button clicked");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CaptureImageScreen(),
+                      ),
+                    );
+                  },
+                  child: Text('Get Started'),
                 ),
-                ElevatedButton(
-                  onPressed: nextPage, // Navigate to next page
-                  child: Text(
-                    "Next",
-                    style: TextStyle(fontSize: 18, color: primarygreen),
-                  ),
-                ),
-                //ElevatedButton(
-                  //onPressed: nextPage, // Navigate to next page
-                  //child: Text(
-                    //"Getting",
-                    //style: TextStyle(fontSize: 18, color: primarygreen),
-                  //),
-                  // Your existing ElevatedButton styles
-                //),
-              ],
+              ),
             ),
           ),
-          // Your existing Positioned widget for "Get Started" button
         ],
       ),
     );
